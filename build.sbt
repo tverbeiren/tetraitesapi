@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   "spark.jobserver"    %% "job-server-extras" % "0.7.0-SNAPSHOT"     % "provided",
   "org.scalactic"      %% "scalactic"         % "3.0.0"     % "test"    ,
   "org.scalatest"      %% "scalatest"         % "3.0.0"     % "test"    ,
-  "org.apache.spark"   %% "spark-core"        % "2.0.1"     % "provided"
+  "org.apache.spark"   %% "spark-core"        % "2.0.1"     % "provided",
+  "org.apache.spark"   %% "spark-mllib"        % "2.0.1"     % "provided"
 )
 
