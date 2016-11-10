@@ -2,6 +2,7 @@ package tetraitesapi
 
 import scala.util.Try
 import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.rdd.RDDFunctions._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -13,6 +14,17 @@ object Common extends Serializable {
     case None => None
     case Some("") => None
     case _ => os
+  }
+
+  /**
+    * Function to convert case class (Product) to a map.
+    * @param cc
+    * @return
+    */
+  def getCCParams(cc: AnyRef) =
+  (Map[String, Any]() /: cc.getClass.getDeclaredFields) {(a, f) =>
+    f.setAccessible(true)
+    a + (f.getName -> f.get(cc))
   }
 
   def loadFarma(sc: SparkContext, fileName:String, filter:Farma => Boolean = _ => true):RDD[Farma] = {
@@ -126,5 +138,101 @@ object Common extends Serializable {
     atcDict7 ++ diffAtcNotInNew
 
   }
+
+  def createHistoriesFarma(farma:RDD[Farma]):RDD[TimelineFarma] = {
+    // val paddedGezo = padGezo(gezo)
+
+    // Efficient gathering of the troups, better than groupBy
+    val intermediate:RDD[((String,String), List[Farma])] = farma
+      .keyBy(x => (x.lidano, x.baDat))
+      .combineByKey(
+        (value) => List(value),
+        (aggr:List[Farma], value) => aggr ::: value :: Nil,
+        (aggr1:List[Farma], aggr2:List[Farma]) => aggr1 ::: aggr2
+      )
+      .sortBy(x => x._1)
+
+    // Convert to object model
+    intermediate
+      .map{case ((lidano, baDat), lGezo) =>
+        TimelineFarma(TimelineFarmaKey(lidano, baDat), lGezo, Map())}
+      .cache
+
+  }
+
+  def getTimeLineFarma(histories:RDD[TimelineFarma], user:String, dateRange:Option[(String, String)] = None) = {
+    histories
+      .filter(_.key.lidano == user)
+      .filter{case TimelineFarma(TimelineFarmaKey(lidano, date), _, _) => dateRange match {
+        case Some((begin, end)) => date >= begin && date <= end
+        case None => true
+      }
+      }
+      .map{case TimelineFarma(TimelineFarmaKey(lidano, date), events, meta) =>
+        List(lidano, date, events.length, meta.toString)
+      }
+      .collect
+  }
+
+  /**
+    * Add a begin record and end record to every persons' records.
+    */
+  def padGezo(sc:SparkContext, gezo: RDD[Gezo], beginDate:String = "20120101", endDate:String = "2161231"):RDD[Gezo] = {
+    val lidanos = gezo.map(_.lidano).distinct.collect
+
+    val addRddBegin = sc.parallelize(lidanos.map(l => new Gezo(l, beginDate, "0", None, None, None, None, None, None, None, None, None, None, None, None)))
+    val addRddEnd = sc.parallelize(lidanos.map(l => new Gezo(l, endDate, "0", None, None, None, None, None, None, None, None, None, None, None, None)))
+
+    gezo union addRddBegin union addRddEnd
+  }
+
+  def createHistoriesGezo(sc:SparkContext)(gezo:RDD[Gezo]):RDD[TimelineGezo] = {
+    val paddedGezo = padGezo(sc, gezo)
+
+    // Efficient gathering of the troups, better than groupBy
+    val intermediate:RDD[((String,String), List[Gezo])] = gezo
+      .keyBy(x => (x.lidano, x.baDat))
+      .combineByKey(
+        (value) => List(value),
+        (aggr:List[Gezo], value) => aggr ::: value :: Nil,
+        (aggr1:List[Gezo], aggr2:List[Gezo]) => aggr1 ::: aggr2
+      )
+      .sortBy(x => x._1)
+
+    // Convert to object model
+    intermediate
+      .map{case ((lidano, baDat), lGezo) =>
+        TimelineGezo(TimelineGezoKey(lidano, baDat), lGezo, Map())}
+      .cache
+
+  }
+
+  // Annotate the history with information about entering, being and leaving the hospital
+  // Most of the entries can be covered using a sliding window, keeping in mind that the first and last element need to be padded.
+  // This has been done earlier in the pipeline.
+  // Be careful, requires historyRdd to be sorted!
+
+  def annotateIsHospital(hist:RDD[TimelineGezo]):RDD[TimelineGezo] = {
+    hist
+      .map(x => x.copy(meta = Map("hospital" -> x.events.map(_.hnummer.isDefined).reduce(_||_))))
+  }
+
+  def annotateIsHospitalWindow(hist:RDD[TimelineGezo]):RDD[TimelineGezo] = {
+    hist
+      .sliding(3)
+      .map(_.toList)
+      .map{case List(a, b, c) => List(a,b,c).map(_.meta.getOrElse("hospital", false)) match {
+        case false :: true :: true  :: Nil  => b.copy(meta = b.meta ++ Map("firstDay" -> true))
+        case true  :: true :: false :: Nil  => b.copy(meta = b.meta ++ Map("lastDay" -> true))
+        case true  :: true :: true :: Nil   => b.copy(meta = b.meta ++ Map("midDay" -> true))
+        case false :: true :: false :: Nil  => b.copy(meta = b.meta ++ Map("1day" -> true))
+        case false :: false :: false :: Nil => b
+        case _                              => b
+      }
+      }
+  }
+
+
+
 
 }

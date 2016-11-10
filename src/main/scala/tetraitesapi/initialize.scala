@@ -44,11 +44,22 @@ object initialize extends SparkJob with NamedObjectSupport {
     val dictBroadcast = sc.broadcast(dict)
     namedObjects.update("genes", NamedBroadcast(dictBroadcast))
 
+    // Convert to histories for Gezo
+    val gezoTimeline = (createHistoriesGezo(sc) _ andThen annotateIsHospital _ andThen annotateIsHospitalWindow _)(gezoDb)
+
+    // Convert to histories for Farma
+    val farmaTimeline = createHistoriesFarma(farmaDb)
+
+    // Persist the histories as well
+    namedObjects.update("gezoTimeline", NamedRDD(gezoTimeline.cache, forceComputation = false, storageLevel = StorageLevel.NONE))
+    namedObjects.update("farmaTimeline", NamedRDD(farmaTimeline.cache, forceComputation = false, storageLevel = StorageLevel.NONE))
+
     Map("metadata" -> "A sample from the data for verification") ++
       Map("dataGezo" -> gezoDb.take(2)) ++
       Map("dataFarma" -> farmaDb.take(2)) ++
-      Map("dict" -> dict.take(2))
-
+      Map("dict" -> dict.take(2)) ++
+      Map("gezoTimeline" -> gezoTimeline.take(2)) ++
+      Map("farmaTimeline" -> farmaTimeline.take(2))
   }
 
 }
