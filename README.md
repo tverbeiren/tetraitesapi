@@ -1,10 +1,11 @@
 # Introduction
 
-Query timeline and event information from medical records.
+Query timeline and event information from medical records using [Spark Jobserver](https://github.com/spark-jobserver/spark-jobserver) to provide a REST API to Spark.
 
 # Data
 
 We use synthetic data.
+
 
 ## Endpoints
 
@@ -39,6 +40,29 @@ Example `initialize.conf`:
 ```
 
 Please note that we add 2 dictionary files as a simple list with a space in-between.
+
+### `gezoTimeline` and `farmaTimeline`
+
+Query the timeline for one of more lidano's for a certain window of time.
+
+Input parameters:
+
+- __lidano__: A regular expression for the lidano key (default: `.*`)
+- __start__: the start date of a window of interest (default: `19000101`)
+- __end__: The end date of a window of interest (default: `25000101`)
+- __window__: Specify a window using regular expressions on the string dates (default: `.*`)
+
+Example call:
+
+```
+curl -d '{
+            lidano = "Patricia"
+            start = 20121116
+            end = 20121205
+         }' \
+     $jobserver':8090/jobs?context=tetraites&appName=tetraitesapi&classPath=tetraitesapi.gezoTimeline&sync=true'
+```
+
 
 # Disclaimer
 
