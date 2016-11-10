@@ -14,7 +14,7 @@ import scala.util.Try
   *
   * - path to gezo file, object format
   * - path to farma file, object format
-  * - path to files with ATC codes
+  * - path to files with ATC codes (space-separated, currently only the first 2 are used)
   */
 object initialize extends SparkJob with NamedObjectSupport {
 
