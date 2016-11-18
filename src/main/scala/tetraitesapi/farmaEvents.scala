@@ -18,7 +18,7 @@ import scala.util.Try
   * - __end__: The end date of a window of interest (default: 1/1/2500)
   * - __window__: Specify a window using regular expressions on the string dates (default: `.*`)
   */
-object farmaTimeline extends SparkJob with NamedObjectSupport {
+object farmaEvents extends SparkJob with NamedObjectSupport {
 
   implicit def rddPersister[T] : NamedObjectPersister[NamedRDD[T]] = new RDDPersister[T]
   implicit def broadcastPersister[U] : NamedObjectPersister[NamedBroadcast[U]] = new BroadcastPersister[U]
@@ -27,13 +27,8 @@ object farmaTimeline extends SparkJob with NamedObjectSupport {
 
   override def runJob(sc: SparkContext, config: Config): Any = {
 
-    val lidanoQuery:String = Try(config.getString("lidano")).getOrElse(".*")
-    val windowStart:String = Try(config.getString("start")).getOrElse("19000101")
-    val windowEnd:String = Try(config.getString("end")).getOrElse("25000101")
-    val window:String = Try(config.getString("window")).getOrElse(".*")
-
-    // The dictionary will be a broadcast variable
-    // -- TODO --
+    val lidanoQuery:String = Try(config.getString("lidano")).getOrElse("no lidano specified")
+    val dayQuery:String = Try(config.getString("day")).getOrElse("no day specified")
 
     // Fetch raw events
     val NamedRDD(gezoDb, _ ,_) = namedObjects.get[NamedRDD[Gezo]]("gezoDb").get
@@ -44,14 +39,12 @@ object farmaTimeline extends SparkJob with NamedObjectSupport {
     val NamedRDD(farmaTimeline, _ ,_) = namedObjects.get[NamedRDD[TimelineFarma]]("farmaTimeline").get
 
     // Convert to proper format for _output_
-    val resultAsMap = farmaTimeline
-      .filter(_.key.lidano.matches(lidanoQuery))
-      .filter(_.key.baDat >= windowStart)
-      .filter(_.key.baDat <= windowEnd)
-      .filter(_.key.baDat.matches(window))
+    val resultAsMap = farmaDb
+      .filter(_.lidano == lidanoQuery)
+      .filter(_.baDat == dayQuery)
       .collect
-      .map{case TimelineFarma(key, events, meta) =>
-          Map("lidano" -> key.lidano, "date" -> key.baDat, "meta" -> meta)}
+
+    // TODO: Add a feature which translates the CNK code to ATC.
 
     Map("meta" -> "Timeline for farma") ++
     Map("data" -> resultAsMap)
