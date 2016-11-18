@@ -1,16 +1,24 @@
 #!/bin/bash
 
-jobserver=127.0.0.1
-
+# Some useful directories
 DIR=$(dirname "$0")
+BASE="$DIR/.."
+CONFIG=$BASE/config
+
+# Read the settings
+source "$CONFIG/settings.sh"
+
+# Convert app name to lowercase
+APPLC=$(echo $APP | tr "[:upper:]" "[:lower:]")
+
+URI="$jobserver:8090/jobs?context=$APPLC&appName=$APPLC&classPath=$CP.farmaTimeline&sync=true"
 
 echo
 echo
 echo ">> Without arguments, all entries are returned"
 echo
 
-curl -d '' \
-     $jobserver':8090/jobs?context=tetraites&appName=tetraitesapi&classPath=tetraitesapi.farmaTimeline&sync=true'
+curl -d '' $URI     
 
 echo
 echo
@@ -21,8 +29,7 @@ curl -d '{
             lidano = "Karel"
             start = 20110101
             end = 20121205
-         }' \
-     $jobserver':8090/jobs?context=tetraites&appName=tetraitesapi&classPath=tetraitesapi.farmaTimeline&sync=true'
+         }' $URI 
 
 echo
 echo
@@ -32,6 +39,5 @@ echo
 curl -d '{
             lidano = "Karel"
             window = "2011.*"
-         }' \
-     $jobserver':8090/jobs?context=tetraites&appName=tetraitesapi&classPath=tetraitesapi.farmaTimeline&sync=true'
+         }' $URI 
 

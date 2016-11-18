@@ -1,14 +1,25 @@
 #!/bin/bash
 
-jobserver=127.0.0.1
-
+# Some useful directories
 DIR=$(dirname "$0")
+BASE="$DIR/.."
+CONFIG=$BASE/config
 
-curl -X DELETE $jobserver':8090/contexts/tetraites'
-curl --data-binary @target/scala-2.11/TetraitesAPI-assembly-0.0.1.jar \
-     $jobserver':8090/jars/tetraitesapi'
+# Read the settings
+source "$CONFIG/settings.sh" 
+
+# Convert app name to lowercase
+APPLC=$(echo $APP | tr "[:upper:]" "[:lower:]")
+
+echo
+echo "Initializing $APP API..."
+echo
+
+curl -X DELETE "$jobserver:8090/contexts/$APPLC"
+curl --data-binary "@$APP_PATH/""$APPLC""_2.11-$APP_VERSION-assembly.jar" \
+     "$jobserver:8090/jars/$APPLC"
 curl -d '' \
-     $jobserver':8090/contexts/tetraites?num-cpu-cores=2&memory-per-node=1g'
-curl --data-binary @$DIR/initialize.conf \
-     $jobserver':8090/jobs?context=tetraites&appName=tetraitesapi&classPath=tetraitesapi.initialize'
+     $jobserver":8090/contexts/$APPLC?num-cpu-cores=2&memory-per-node=1g"
+curl --data-binary "@$BASE/CONFIG/$INIT_CONF" \
+     "$jobserver:8090/jobs?context=$APPLC&appName=$APPLC&classPath=$CP.initialize"
 
