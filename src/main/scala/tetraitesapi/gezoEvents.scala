@@ -58,7 +58,7 @@ object gezoEvents extends SparkJob with NamedObjectSupport {
         // Add atc code when present
         .map(m => m ++ Map("atc" -> atcDict.getOrElse(m("farmprod"), "")))
 
-    Map("meta" -> s"Events for farma for ${lidanoQuery} on ${dayQuery}") ++
+    Map("meta" -> s"Events for gezo for ${lidanoQuery} on ${dayQuery}") ++
     Map("data" -> resultAsMap)
 
   }
