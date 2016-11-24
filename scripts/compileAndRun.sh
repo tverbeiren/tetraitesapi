@@ -19,5 +19,8 @@ sbt assembly
 echo
 
 echo ">> Copy assembly to target dir"
+echo
+echo "Running this command:"
+echo cp target/scala-2.11/tetraitesapi-assembly-$APP_VERSION.jar "$APP_PATH/""$APPLC""_2.11-$APP_VERSION-assembly.jar"
 
 cp target/scala-2.11/tetraitesapi-assembly-$APP_VERSION.jar "$APP_PATH/""$APPLC""_2.11-$APP_VERSION-assembly.jar"
