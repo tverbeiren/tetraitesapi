@@ -1,6 +1,6 @@
 # Introduction
 
-Query timeline and event information from medical records using [Spark Jobserver](https://github.com/spark-jobserver/spark-jobserver) to provide a REST API to Spark.
+Query timeline and event information from medical records using  to provide a REST API to Spark.
 
 # Data
 
@@ -9,7 +9,7 @@ We use synthetic data generated to be of the same format and in line with the re
 
 # Use
 
-The easist approach is to spin up a [Docker](https://www.docker.com/) container containing a full Spark Jobserver stack. We have done some preparations, so that should be easy...
+The fastest approach is to spin up a [Docker](https://www.docker.com/) container containing a full Spark Jobserver stack. We have done some preparations, so that should be easy...
 
 ## Setup: Word count
 
@@ -23,7 +23,7 @@ docker run -d -p 8090:8090 -v /tmp/api/data:/app/data tverbeiren/jobserver
 
 If this step is working, you can proceed to the next one.
 
-## Tetraites API
+## Tetraites API binary release
 
 Let's assume you've started the docker container as described in 
 
@@ -48,5 +48,16 @@ Test the available endpoints:
 scripts/farmaTimeline.sh
 scripts/gezoTimeline.sh
 ```
+
+## Tetraites API source
+
+In order to compile from source, the following procedure should be sufficient
+(given all dependencies are available):
+
+1. Clone the project from github
+2. Run the script `compileAndRun.sh`
+
+These two steps should be sufficient to be in the state ready for following
+the procedure for the binary release described above.
 
 
