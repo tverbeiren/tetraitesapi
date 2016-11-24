@@ -21,7 +21,31 @@ object Model extends Serializable {
                    val voorsNr: Option[String],
                    val voorsSpec: Option[String],
                    val apothekerTia: Option[String],
-                   val apothekerSpec: Option[String] ) extends Serializable
+                   val apothekerSpec: Option[String] ) extends Serializable {
+
+    def asMap:Map[String,String] = {
+        Map(
+            "lidano" -> lidano,
+            "prestatie" -> prestatie,
+            "farmprod" -> farmprod.getOrElse(""),
+            "modn" -> modn.getOrElse(""),
+            "baDat" -> baDat,
+            "dateInd" -> dateInd.getOrElse(""),
+            "bed" -> bed.getOrElse(""),
+            "gev" -> gev.getOrElse(""),
+            "perstus" -> perstus.getOrElse(""),
+            "lnum1" -> lnum1.getOrElse(""),
+            "lnum2" -> lnum2.getOrElse(""),
+            "verstrNr" -> verstrNr.getOrElse(""),
+            "verstrSpec" -> verstrSpec.getOrElse(""),
+            "voorsNr" -> voorsNr.getOrElse(""),
+            "voorsSpec" -> voorsSpec.getOrElse(""),
+            "apothekerTia" -> apothekerTia.getOrElse(""),
+            "apothekerSpec" -> apothekerSpec.getOrElse("")
+        )
+    }
+
+  }
 
   case class TimelineFarmaKey(val lidano:String, val baDat: String) extends Serializable
 
@@ -45,7 +69,28 @@ object Model extends Serializable {
                   val verstrNr: Option[String],
                   val verstrSpec: Option[String],
                   val voorsNr: Option[String],
-                  val voorsSpec: Option[String]) extends Serializable
+                  val voorsSpec: Option[String]) extends Serializable {
+    
+    def asMap:Map[String,String] = {
+      Map(
+        "lidano" ->lidano,
+        "baDat" -> baDat,
+        "prestatie" -> prestatie,
+        "farmprod" -> farmprod.getOrElse(""),
+        "bed" -> bed.getOrElse(""),
+        "gev" -> gev.getOrElse(""),
+        "hnummer" -> hnummer.getOrElse(""),
+        "lnum2" -> lnum2.getOrElse(""),
+        "modn" -> modn.getOrElse(""),
+        "nom2" -> norm2.getOrElse(""),
+        "perstus" -> perstus.getOrElse(""),
+        "verstrNr" -> verstrNr.getOrElse(""),
+        "verstrSpec" -> verstrSpec.getOrElse(""),
+        "voorsNr" -> voorsNr.getOrElse(""),
+        "voorsSpec" -> voorsSpec.getOrElse("")
+      )
+    }
+  }
 
   case class TimelineGezoKey(val lidano:String, val baDat: String) extends Serializable
 

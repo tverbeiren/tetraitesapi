@@ -35,9 +35,10 @@ object initialize extends SparkJob with NamedObjectSupport {
     val dictString:String = Try(config.getString("atcDict")).getOrElse("<Make sure you provide the correct input file>")
     val atcDictString = dictString.split(" ").head
     val atcDict7String = dictString.split(" ").tail.head
+    // The _nomenclatuur_ codes
+    val prestDictString:String = Try(config.getString("prestDict")).getOrElse("<Make sure your provide the correct input file>")
 
     // Load data from indicated files:w
-
     val gezoDb:RDD[Gezo] = loadGezo(sc, gezoString)
     val farmaDb:RDD[Farma] = loadFarma(sc, farmaString)
 
@@ -45,9 +46,14 @@ object initialize extends SparkJob with NamedObjectSupport {
     namedObjects.update("farmaDb", NamedRDD(farmaDb.cache, forceComputation = false, storageLevel = StorageLevel.NONE))
 
     // Load dictionary, absolute paths at this moment
-    val dict = loadDictionary(sc, atcDictString, atcDict7String)
-    val dictBroadcast = sc.broadcast(dict)
-    namedObjects.update("genes", NamedBroadcast(dictBroadcast))
+    val atcDict = loadDictionary(sc, atcDictString, atcDict7String)
+    val atcDictBroadcast = sc.broadcast(atcDict)
+    namedObjects.update("atcDict", NamedBroadcast(atcDictBroadcast))
+
+    // Load dictionary for prestaties, absolute paths at this moment
+    val prestDict = loadPrestDictionary(sc, prestDictString)
+    val prestDictBroadcast = sc.broadcast(prestDict)
+    namedObjects.update("prestDict", NamedBroadcast(prestDictBroadcast))
 
     // Convert to histories for Gezo
     val gezoTimeline = (createHistoriesGezo(sc) _ andThen annotateIsHospital _ andThen annotateIsHospitalWindow _)(gezoDb)
@@ -62,7 +68,8 @@ object initialize extends SparkJob with NamedObjectSupport {
     Map("metadata" -> "A sample from the data for verification") ++
       Map("dataGezo" -> gezoDb.take(2)) ++
       Map("dataFarma" -> farmaDb.take(2)) ++
-      Map("dict" -> dict.take(2)) ++
+      Map("atcDict" -> atcDict.take(2)) ++
+      Map("prestDict" -> prestDict.take(10)) ++
       Map("gezoTimeline" -> gezoTimeline.take(2)) ++
       Map("farmaTimeline" -> farmaTimeline.take(2))
   }

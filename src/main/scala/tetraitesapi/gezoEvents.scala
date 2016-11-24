@@ -20,6 +20,8 @@ import scala.util.Try
   */
 object gezoEvents extends SparkJob with NamedObjectSupport {
 
+  import Common._
+
   implicit def rddPersister[T] : NamedObjectPersister[NamedRDD[T]] = new RDDPersister[T]
   implicit def broadcastPersister[U] : NamedObjectPersister[NamedBroadcast[U]] = new BroadcastPersister[U]
 
@@ -34,17 +36,29 @@ object gezoEvents extends SparkJob with NamedObjectSupport {
     val NamedRDD(gezoDb, _ ,_) = namedObjects.get[NamedRDD[Gezo]]("gezoDb").get
     val NamedRDD(farmaDb, _ ,_) = namedObjects.get[NamedRDD[Farma]]("farmaDb").get
 
-    // Fetch timeline
-    val NamedRDD(gezoTimeline, _ ,_) = namedObjects.get[NamedRDD[TimelineGezo]]("gezoTimeline").get
-    val NamedRDD(farmaTimeline, _ ,_) = namedObjects.get[NamedRDD[TimelineFarma]]("farmaTimeline").get
+    // Dictionary ATC codes
+    val NamedBroadcast(atcDictBc) = namedObjects.get[NamedBroadcast[scala.collection.Map[String,String]]]("atcDict").get
+    val atcDict = atcDictBc.value
+
+    // Dictionary Prestaties
+    val NamedBroadcast(prestDictBc) = namedObjects.get[NamedBroadcast[scala.collection.Map[String,String]]]("prestDict").get
+    val prestDict = prestDictBc.value
 
     // Convert to proper format for _output_
-    val resultAsMap = gezoDb
+    val resultAsModel = gezoDb
       .filter(_.lidano == lidanoQuery)
       .filter(_.baDat == dayQuery)
-      .collect
 
-    Map("meta" -> "Timeline for farma") ++
+    val resultAsMap =
+      resultAsModel
+        .map(_.asMap)
+        .collect
+        // Add description for prestatie
+        .map(m => m ++ Map("prestatieDesc" -> prestDict.getOrElse(m("prestatie"), "")))
+        // Add atc code when present
+        .map(m => m ++ Map("atc" -> atcDict.getOrElse(m("farmprod"), "")))
+
+    Map("meta" -> s"Events for farma for ${lidanoQuery} on ${dayQuery}") ++
     Map("data" -> resultAsMap)
 
   }

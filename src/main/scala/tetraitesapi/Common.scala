@@ -101,7 +101,19 @@ object Common extends Serializable {
     selection contains record.lidano
   }
 
-  def loadDictionary(sc:SparkContext, atcDictString:String, atcDict7String:String):scala.collection.Map[String,String] = {
+  def loadPrestDictionary(sc:SparkContext, prestDictString:String):scala.collection.Map[String,String] = {
+
+    sc.textFile(prestDictString)
+      .zipWithIndex
+//      .filter(_._2 > 0)
+      .keys
+      .map(x => x.split("\\|").map(_.replace("\"", "")))
+      .map(x => (x(0), x(3)))
+      .collectAsMap
+
+  }
+
+    def loadDictionary(sc:SparkContext, atcDictString:String, atcDict7String:String):scala.collection.Map[String,String] = {
 
     val atcDict = sc.textFile(atcDictString)
       .zipWithIndex
