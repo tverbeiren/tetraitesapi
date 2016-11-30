@@ -20,6 +20,8 @@ curl --data-binary "@$APP_PATH/""$APPLC""_2.11-$APP_VERSION-assembly.jar" \
      "$jobserver:8090/jars/$APPLC"
 curl -d '' \
      $jobserver":8090/contexts/$APPLC?num-cpu-cores=2&memory-per-node=1g"
-curl --data-binary "@$BASE/CONFIG/$INIT_CONF" \
-     "$jobserver:8090/jobs?context=$APPLC&appName=$APPLC&classPath=$CP.initialize"
+#curl --data-binary "@$BASE/CONFIG/$INIT_CONF" \
+#     "$jobserver:8090/jobs?context=$APPLC&appName=$APPLC&classPath=$CP.initialize"
 
+curl --data-binary "@$CONFIG/$INIT_CONF" \
+     "$jobserver:8090/jobs?context=$APPLC&appName=$APPLC&classPath=$CP.initialize"
