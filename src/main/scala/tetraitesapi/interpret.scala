@@ -18,7 +18,7 @@ import scala.util.Try
   * - __end__: The end date of a window of interest (default: 1/1/2500)
   * - __window__: Specify a window using regular expressions on the string dates (default: `.*`)
   */
-object interprete extends SparkJob with NamedObjectSupport {
+object interpret extends SparkJob with NamedObjectSupport {
 
   implicit def rddPersister[T] : NamedObjectPersister[NamedRDD[T]] = new RDDPersister[T]
   implicit def broadcastPersister[U] : NamedObjectPersister[NamedBroadcast[U]] = new BroadcastPersister[U]
@@ -58,7 +58,7 @@ object interprete extends SparkJob with NamedObjectSupport {
       * In this approach, only _local_ information is used. This can be improved upon.
       *
       */
-    def interpreteFarma(record:Farma):Option[String] = {
+    def interpretFarma(record:Farma):Option[String] = {
       record match {
         case Farma(_, _, Some("2642619"), _, _, _, _, _, _, _, _, _, _, _, _, _, _) => Some("ibuprofen")
         case _ => None
@@ -71,7 +71,7 @@ object interprete extends SparkJob with NamedObjectSupport {
       * In this approach, only _local_ information is used. This can be improved upon.
       *
       */
-    def interpreteGezo(record:Gezo):Option[String] = {
+    def interpretGezo(record:Gezo):Option[String] = {
       record match {
         case Gezo(_, _, "424104", _, _, _, _, _, _, _, _, _, _, _, _) => Some("bevalling met keizersnede")
         case Gezo(_, _, "301011", _, _, _, _, _, _, _, _, _, _, _, _) => Some("tandarts bezoek")
@@ -81,11 +81,11 @@ object interprete extends SparkJob with NamedObjectSupport {
 
 
     // Very simple aggregation of results
-    val interpretionsFarma = filteredFarmaDb.map(interpreteFarma).flatMap(x=>x).collect.toList.distinct
-    val interpretionsGezo = filteredGezoDb.map(interpreteGezo).flatMap(x=>x).collect.toList.distinct
+    val interpretationsFarma = filteredFarmaDb.map(interpretFarma).flatMap(x=>x).collect.toList.distinct
+    val interpretationsGezo = filteredGezoDb.map(interpretGezo).flatMap(x=>x).collect.toList.distinct
 
     Map("meta" -> s"Interpretation for $lidanoQuery on $dayQuery") ++
-    Map("data" -> (interpretionsGezo ++ interpretionsFarma))
+    Map("data" -> (interpretationsGezo ++ interpretationsFarma))
 
   }
 
