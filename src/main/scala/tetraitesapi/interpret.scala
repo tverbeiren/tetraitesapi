@@ -60,7 +60,7 @@ object interpret extends SparkJob with NamedObjectSupport {
       */
     def interpretFarma(record:Farma):Option[String] = {
       record match {
-        case Farma(_, _, Some("2642619"), _, _, _, _, _, _, _, _, _, _, _, _, _, _) => Some("ibuprofen")
+        case Farma(_, _, Some("2642619"), _, _, _, _, _, _, _, _, _, _, _, _, _, _) => Some("Antithrombotic medication?")
         case _ => None
       }
     }
@@ -79,13 +79,21 @@ object interpret extends SparkJob with NamedObjectSupport {
       }
     }
 
+    /**
+      * Add a link to the WHO database when the ATC code can be resolved.
+      */
+    def addLink(record:Farma):Option[String] = record.farmprod.flatMap { prestatie =>
+      val atcCodeOption = atcDict.get(prestatie)
+      atcCodeOption.map(atcCode => s"https://www.whocc.no/atc_ddd_index/?code=$atcCode&showdescription=yes")
+    }
 
     // Very simple aggregation of results
     val interpretationsFarma = filteredFarmaDb.map(interpretFarma).flatMap(x=>x).collect.toList.distinct
+    val linksFarma = filteredFarmaDb.map(addLink).flatMap(x=>x).collect.toList.distinct
     val interpretationsGezo = filteredGezoDb.map(interpretGezo).flatMap(x=>x).collect.toList.distinct
 
     Map("meta" -> s"Interpretation for $lidanoQuery on $dayQuery") ++
-    Map("data" -> (interpretationsGezo ++ interpretationsFarma))
+    Map("data" -> (interpretationsGezo ++ interpretationsFarma ++ linksFarma))
 
   }
 
