@@ -51,7 +51,7 @@ object gezoTimeline extends SparkJob with NamedObjectSupport {
         .filter(_.key.baDat.matches(window))
         .collect
         .map{case TimelineGezo(key, events, meta) =>
-            Map("lidano" -> key.lidano, "date" -> key.baDat, "meta" -> meta)}
+            Map("lidano" -> key.lidano, "date" -> key.baDat, "meta" -> meta)  ++ sumAmountsGezo(events.toArray)}
 
     Map("meta" -> "Timeline for gezo") ++
     Map("data" -> resultAsMap)

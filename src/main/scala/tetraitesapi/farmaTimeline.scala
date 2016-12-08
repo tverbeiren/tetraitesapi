@@ -20,6 +20,8 @@ import scala.util.Try
   */
 object farmaTimeline extends SparkJob with NamedObjectSupport {
 
+  import Common._
+
   implicit def rddPersister[T] : NamedObjectPersister[NamedRDD[T]] = new RDDPersister[T]
   implicit def broadcastPersister[U] : NamedObjectPersister[NamedBroadcast[U]] = new BroadcastPersister[U]
 
@@ -51,7 +53,10 @@ object farmaTimeline extends SparkJob with NamedObjectSupport {
       .filter(_.key.baDat.matches(window))
       .collect
       .map{case TimelineFarma(key, events, meta) =>
-          Map("lidano" -> key.lidano, "date" -> key.baDat, "meta" -> meta)}
+          Map("lidano" -> key.lidano,
+              "date" -> key.baDat,
+              "meta" -> meta) ++ sumAmountsFarma(events.toArray)
+      }
 
     Map("meta" -> "Timeline for farma") ++
     Map("data" -> resultAsMap)

@@ -40,6 +40,10 @@ object gezoEvents extends SparkJob with NamedObjectSupport {
     val NamedBroadcast(atcDictBc) = namedObjects.get[NamedBroadcast[scala.collection.Map[String,String]]]("atcDict").get
     val atcDict = atcDictBc.value
 
+    // Dictionary Names
+    val NamedBroadcast(atcDictNamesBc) = namedObjects.get[NamedBroadcast[scala.collection.Map[String,String]]]("atcDictNames").get
+    val atcDictNames = atcDictNamesBc.value
+
     // Dictionary Prestaties
     val NamedBroadcast(prestDictBc) = namedObjects.get[NamedBroadcast[scala.collection.Map[String,String]]]("prestDict").get
     val prestDict = prestDictBc.value
@@ -57,6 +61,10 @@ object gezoEvents extends SparkJob with NamedObjectSupport {
         .map(m => m ++ Map("prestatieDesc" -> prestDict.getOrElse(m("prestatie"), "")))
         // Add atc code when present
         .map(m => m ++ Map("atc" -> atcDict.getOrElse(m("farmprod"), "")))
+        .map(m => m ++ Map("name" -> atcDictNames.getOrElse(m("farmprod"), "")))
+        .map(m => m ++ parseAmounts(Some(m("bed")), Some(m("perstus")), Some(m("gev"))))
+        .map(m => m - "perstus" - "bed")
+
 
     Map("meta" -> s"Events for gezo for ${lidanoQuery} on ${dayQuery}") ++
     Map("data" -> resultAsMap)

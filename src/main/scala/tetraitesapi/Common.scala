@@ -151,6 +151,44 @@ object Common extends Serializable {
 
   }
 
+  def loadDictionaryNames(sc:SparkContext, atcDictString:String, atcDict7String:String):scala.collection.Map[String,String] = {
+
+    val atcDict = sc.textFile(atcDictString)
+      .zipWithIndex
+      .filter(_._2 > 0)
+      .keys
+      .map(_.split(";").map(_.replace("\"", "")))
+      .map(x => (Try(x(0).toInt).toOption, x(1)))
+      .flatMap(x => x._1 match {
+        case Some(i) => Some(i.toString, x._2)
+        case None => None
+      })
+      .collectAsMap
+
+    val atcDict7 = sc.textFile(atcDict7String)
+      .zipWithIndex
+      .filter(_._2 > 0)
+      .keys
+      .map(_.split("\t").map(_.replace("\"", "")))
+      .flatMap(x => Seq((Try(x(1)).toOption, Try(x(7).toInt).toOption),
+        (Try(x(1)).toOption, Try(x(8).toInt).toOption),
+        (Try(x(1)).toOption, Try(x(9).toInt).toOption),
+        (Try(x(1)).toOption, Try(x(10).toInt).toOption)))
+      .filter(_._1.isDefined)
+      .map { case (name, ocnk) => ocnk match {
+        case Some(cnk) => Some(cnk.toString, name.get)
+        case None => None
+      }
+      }
+      .flatMap(x => x)
+      .collectAsMap
+
+    val diffAtcNotInNew = atcDict.filter{case (key, value) => value != "-" && !atcDict7.contains(key)}.toMap
+
+    atcDict7 ++ diffAtcNotInNew
+
+  }
+
   def createHistoriesFarma(farma:RDD[Farma]):RDD[TimelineFarma] = {
     // val paddedGezo = padGezo(gezo)
 
@@ -244,7 +282,48 @@ object Common extends Serializable {
       }
   }
 
+  def parseAmounts(bed:Option[String], perstus: Option[String], gev:Option[String]) = {
+    val bedrag = parseOptionString(bed).map(_.toDouble).getOrElse(0.0)
+    val persoonlijk = parseOptionString(perstus).map(_.toDouble).getOrElse(0.0)
+    val aantal = parseOptionString(gev).map(_.toInt).getOrElse(0)
+    // (bedrag, persoonlijk, aantal)
+    val totaal = Math.max(bedrag, persoonlijk)
 
+    Map(
+      "totaal" -> totaal,
+      "ziv"    -> (totaal - persoonlijk),
+      "gev"    -> aantal
+    )
+  }
 
+  def parseAmountsToTuple(bed:Option[String], perstus: Option[String], gev:Option[String]) = {
+    val bedrag = bed.map(_.toDouble).getOrElse(0.0)
+    val persoonlijk = perstus.map(_.toDouble).getOrElse(0.0)
+    val aantal = gev.map(_.toInt).getOrElse(0)
+    // (bedrag, persoonlijk, aantal)
+    val totaal = Math.max(bedrag, persoonlijk)
+
+    (totaal, (totaal - persoonlijk), aantal)
+  }
+
+  def sumAmountsFarma(a: Array[Farma]) = {
+    val (totaal, perstus, gev) =
+      a
+        .map(x => parseAmountsToTuple(x.bed, x.perstus, x.gev))
+        .map{case (totaal, perstus, gev) => (totaal * gev, perstus * gev, gev)}
+        .reduce((x,y) => (x._1 + y._1, x._2 + y._2, x._3 + y._3))
+
+    Map("totaal" -> totaal, "perstus" -> perstus, "ziv" -> (totaal - perstus))
+  }
+
+  def sumAmountsGezo(a: Array[Gezo]) = {
+    val (totaal, perstus, gev) =
+      a
+        .map(x => parseAmountsToTuple(x.bed, x.perstus, x.gev))
+        .map{case (totaal, perstus, gev) => (totaal * gev, perstus * gev, gev)}
+        .reduce((x,y) => (x._1 + y._1, x._2 + y._2, x._3 + y._3))
+
+    Map("totaal" -> totaal, "perstus" -> perstus, "ziv" -> (totaal - perstus))
+  }
 
 }

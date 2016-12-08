@@ -50,6 +50,11 @@ object initialize extends SparkJob with NamedObjectSupport {
     val atcDictBroadcast = sc.broadcast(atcDict)
     namedObjects.update("atcDict", NamedBroadcast(atcDictBroadcast))
 
+    // Load dictionary for names, absolute paths at this moment
+    val atcDictNames = loadDictionaryNames(sc, atcDictString, atcDict7String)
+    val atcDictNamesBroadcast = sc.broadcast(atcDictNames)
+    namedObjects.update("atcDictNames", NamedBroadcast(atcDictNamesBroadcast))
+
     // Load dictionary for prestaties, absolute paths at this moment
     val prestDict = loadPrestDictionary(sc, prestDictString)
     val prestDictBroadcast = sc.broadcast(prestDict)
