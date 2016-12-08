@@ -10,7 +10,7 @@ export APP="TetraitesAPI"
 export CP="tetraitesapi"
 
 # Version
-export APP_VERSION="0.0.3"
+export APP_VERSION="0.0.4"
 
 # Location
 export APP_PATH="/tmp/api"
